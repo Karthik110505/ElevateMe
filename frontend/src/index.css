@@ -1,0 +1,104 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom neon effects and animations */
+@layer utilities {
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+
+  .animate-pulse-neon {
+    animation: pulse-neon 2s ease-in-out infinite alternate;
+  }
+
+  .animate-spin-slow {
+    animation: spin 4s linear infinite;
+  }
+
+  /* Performance optimizations for smooth animations */
+  .smooth-animation {
+    will-change: transform, opacity;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+
+  .gpu-accelerated {
+    transform: translate3d(0, 0, 0);
+    will-change: transform;
+  }
+}
+
+@keyframes glow {
+  from {
+    text-shadow: 0 0 10px rgba(0, 217, 255, 0.5);
+  }
+  to {
+    text-shadow: 0 0 20px rgba(0, 217, 255, 0.8),
+      0 0 30px rgba(0, 217, 255, 0.4);
+  }
+}
+
+@keyframes pulse-neon {
+  from {
+    box-shadow: 0 0 20px rgba(0, 217, 255, 0.3);
+  }
+  to {
+    box-shadow: 0 0 30px rgba(0, 217, 255, 0.8), 0 0 40px rgba(0, 217, 255, 0.4);
+  }
+}
+
+/* Hide scrollbars completely */
+::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: transparent;
+}
+
+/* Hide scrollbars for Firefox */
+* {
+  scrollbar-width: none;
+}
+
+/* Hide scrollbars for Internet Explorer and Edge */
+* {
+  -ms-overflow-style: none;
+}
+
+/* Custom focus styles */
+input:focus,
+textarea:focus {
+  outline: none;
+}
+
+/* Button hover effects */
+button:focus {
+  outline: none;
+}
+
+/* Custom gradient backgrounds */
+.bg-gradient-neon {
+  background: linear-gradient(
+    135deg,
+    rgba(0, 217, 255, 0.1) 0%,
+    rgba(99, 102, 241, 0.1) 100%
+  );
+}
+
+/* Glass morphism effect */
+.glass {
+  backdrop-filter: blur(10px);
+  background: rgba(15, 22, 41, 0.8);
+  border: 1px solid rgba(0, 217, 255, 0.2);
+}
