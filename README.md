@@ -9,26 +9,31 @@ ElevateMe is a full-stack MERN application that enables developers to showcase t
 ## � Screenshots
 
 ### Landing Page
+
 ![Landing Page](./docs/screenshots/landing-page.png)
-*Modern landing page with hero section and feature highlights*
+_Modern landing page with hero section and feature highlights_
 
 ### Explore Projects
+
 ![Explore Projects](./docs/screenshots/explore-projects.png)
-*Discover and browse projects from the developer community*
+_Discover and browse projects from the developer community_
 
 ### My Profile
+
 ![My Profile](./docs/screenshots/my-profile.png)
-*Personal profile management and project showcase*
+_Personal profile management and project showcase_
 
 ### Upload Project
+
 ![Upload Project](./docs/screenshots/upload-project.png)
-*Intuitive project upload with image and detail management*
+_Intuitive project upload with image and detail management_
 
 ---
 
 ## ✨ Features
 
 ### 🔐 Authentication & Security
+
 - **OAuth Integration**: Login with Google, GitHub, and LinkedIn
 - **JWT Authentication**: Secure token-based authentication
 - **Session Management**: Express sessions with MongoDB store
@@ -36,17 +41,20 @@ ElevateMe is a full-stack MERN application that enables developers to showcase t
 - **Input Validation**: Comprehensive validation using Joi and express-validator
 
 ### 📁 Project Management
+
 - **Project Upload**: Upload projects with images, descriptions, and tags
 - **Image Storage**: Cloudinary integration for optimized image handling
 - **Project Discovery**: Browse and search through community projects
 - **Project Details**: Detailed project pages with full information
 
 ### 👤 User Profiles
+
 - **Profile Management**: Comprehensive user profile system
 - **Public Profiles**: Shareable public profile pages
 - **Project Showcase**: Display personal projects and achievements
 
 ### 🎨 Modern UI/UX
+
 - **Responsive Design**: Mobile-first, fully responsive layout
 - **Tailwind CSS**: Modern utility-first CSS framework
 - **Framer Motion**: Smooth animations and transitions
@@ -57,6 +65,7 @@ ElevateMe is a full-stack MERN application that enables developers to showcase t
 ## 🛠️ Tech Stack
 
 ### Frontend
+
 - **React 18** - Modern React with hooks and functional components
 - **Vite** - Fast build tool and development server
 - **React Router v7** - Client-side routing
@@ -64,6 +73,7 @@ ElevateMe is a full-stack MERN application that enables developers to showcase t
 - **Framer Motion** - Animation library
 
 ### Backend
+
 - **Node.js** - JavaScript runtime
 - **Express.js** - Web application framework
 - **MongoDB** - NoSQL database
@@ -74,6 +84,7 @@ ElevateMe is a full-stack MERN application that enables developers to showcase t
 - **Helmet** - Security middleware
 
 ### Development Tools
+
 - **Nodemon** - Development server auto-restart
 - **ESLint** - Code linting
 - **Jest** - Testing framework
@@ -140,27 +151,29 @@ elevateme/
 ### Environment Variables
 
 #### Backend (.env)
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `MONGODB_URI` | MongoDB connection string | ✅ |
-| `JWT_SECRET` | Secret key for JWT tokens | ✅ |
-| `SESSION_SECRET` | Secret key for sessions | ✅ |
-| `GOOGLE_CLIENT_ID` | Google OAuth client ID | ✅ |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret | ✅ |
-| `GITHUB_CLIENT_ID` | GitHub OAuth client ID | ✅ |
-| `GITHUB_CLIENT_SECRET` | GitHub OAuth client secret | ✅ |
-| `LINKEDIN_CLIENT_ID` | LinkedIn OAuth client ID | ✅ |
-| `LINKEDIN_CLIENT_SECRET` | LinkedIn OAuth client secret | ✅ |
-| `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name | ✅ |
-| `CLOUDINARY_API_KEY` | Cloudinary API key | ✅ |
-| `CLOUDINARY_API_SECRET` | Cloudinary API secret | ✅ |
-| `PORT` | Server port (default: 5000) | ❌ |
-| `NODE_ENV` | Environment (development/production) | ❌ |
-| `CLIENT_URL` | Frontend URL for CORS | ✅ |
+
+| Variable                 | Description                          | Required |
+| ------------------------ | ------------------------------------ | -------- |
+| `MONGODB_URI`            | MongoDB connection string            | ✅       |
+| `JWT_SECRET`             | Secret key for JWT tokens            | ✅       |
+| `SESSION_SECRET`         | Secret key for sessions              | ✅       |
+| `GOOGLE_CLIENT_ID`       | Google OAuth client ID               | ✅       |
+| `GOOGLE_CLIENT_SECRET`   | Google OAuth client secret           | ✅       |
+| `GITHUB_CLIENT_ID`       | GitHub OAuth client ID               | ✅       |
+| `GITHUB_CLIENT_SECRET`   | GitHub OAuth client secret           | ✅       |
+| `LINKEDIN_CLIENT_ID`     | LinkedIn OAuth client ID             | ✅       |
+| `LINKEDIN_CLIENT_SECRET` | LinkedIn OAuth client secret         | ✅       |
+| `CLOUDINARY_CLOUD_NAME`  | Cloudinary cloud name                | ✅       |
+| `CLOUDINARY_API_KEY`     | Cloudinary API key                   | ✅       |
+| `CLOUDINARY_API_SECRET`  | Cloudinary API secret                | ✅       |
+| `PORT`                   | Server port (default: 5000)          | ❌       |
+| `NODE_ENV`               | Environment (development/production) | ❌       |
+| `CLIENT_URL`             | Frontend URL for CORS                | ✅       |
 
 ### OAuth Setup
 
 For detailed OAuth setup instructions, see:
+
 - [OAuth Setup Guide](./docs/OAUTH_SETUP_GUIDE.md)
 - [MongoDB Atlas Setup](./docs/MONGODB_ATLAS_SETUP.md)
 
@@ -181,11 +194,13 @@ For detailed OAuth setup instructions, see:
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - Node.js (v16 or higher)
 - MongoDB (local installation or MongoDB Atlas)
 - npm or yarn package manager
 
 ### 1. Clone the Repository
+
 ```bash
 git clone https://github.com/yourusername/elevateme.git
 cd elevateme
@@ -199,6 +214,7 @@ npm install
 ```
 
 Create a `.env` file in the backend directory:
+
 ```env
 # Database
 MONGODB_URI=mongodb://localhost:27017/elevateme
@@ -231,6 +247,7 @@ CLIENT_URL=http://localhost:5173
 ```
 
 Start the backend server:
+
 ```bash
 npm run dev
 ```
@@ -244,6 +261,7 @@ npm run dev
 ```
 
 The application will be available at:
+
 - **Frontend**: http://localhost:5173
 - **Backend API**: http://localhost:5000
 
@@ -252,6 +270,7 @@ The application will be available at:
 ## � API Endpoints
 
 ### Authentication
+
 ```
 POST   /api/auth/register        # Register new user
 POST   /api/auth/login           # Login user
@@ -263,6 +282,7 @@ GET    /api/auth/linkedin        # LinkedIn OAuth
 ```
 
 ### Users
+
 ```
 GET    /api/users/profile        # Get user profile
 PUT    /api/users/profile        # Update user profile
@@ -270,6 +290,7 @@ GET    /api/users/:id            # Get public profile
 ```
 
 ### Projects
+
 ```
 GET    /api/projects             # Get all projects
 POST   /api/projects             # Create new project
@@ -280,6 +301,7 @@ GET    /api/projects/user/:id    # Get user's projects
 ```
 
 ### Health
+
 ```
 GET    /api/health               # Health check
 ```
@@ -289,12 +311,14 @@ GET    /api/health               # Health check
 ## 🧪 Testing
 
 ### Backend Tests
+
 ```bash
 cd backend
 npm test
 ```
 
 ### Frontend Tests
+
 ```bash
 cd frontend
 npm run test
@@ -305,15 +329,18 @@ npm run test
 ## 🚀 Deployment
 
 ### Backend Deployment
+
 1. Set production environment variables
 2. Build the application: `npm run build`
 3. Deploy to your preferred platform (Heroku, Railway, DigitalOcean, etc.)
 
 ### Frontend Deployment
+
 1. Build the application: `npm run build`
 2. Deploy the `dist` folder to your preferred hosting (Vercel, Netlify, etc.)
 
 ### Database
+
 - Use MongoDB Atlas for production
 - Configure connection strings and security settings
 
@@ -344,10 +371,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## � Authors
-
-- **Your Name** - *Initial work* - [YourGitHub](https://github.com/yourusername)
-
 ---
 
 ## 🙏 Acknowledgments
@@ -361,6 +384,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📞 Support
 
 If you have any questions or need help, please:
+
 1. Check the [documentation](./docs/)
 2. Open an issue on GitHub
 3. Contact the maintainers
