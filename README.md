@@ -1,5 +1,6 @@
 # ElevateMe 🚀
 
+
 **A modern platform connecting developers and employers through portfolio showcase and project collaboration.**
 
 ElevateMe is a full-stack MERN application that enables developers to showcase their work, discover interesting projects, and connect with potential employers or collaborators. The platform features secure authentication, project management, and a clean, modern interface built with React and Tailwind CSS.
