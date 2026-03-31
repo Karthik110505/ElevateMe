@@ -29,16 +29,50 @@ router.get("/profile", auth, async (req, res) => {
 // @access  Private
 router.put("/profile", auth, async (req, res) => {
   try {
-    const updates = req.body;
+    const updates = { ...req.body };
+
+    if (updates.name && !updates.fullName) {
+      updates.fullName = updates.name;
+    }
+    delete updates.name;
+
+    const allowedUpdates = [
+      "fullName",
+      "bio",
+      "skills",
+      "socialLinks",
+      "title",
+      "role",
+      "location",
+      "website",
+      "github",
+      "linkedin",
+      "portfolio",
+      "company",
+      "companySize",
+      "industry",
+      "experience",
+    ];
+
+    const safeUpdates = Object.keys(updates).reduce((acc, key) => {
+      if (allowedUpdates.includes(key)) {
+        acc[key] = updates[key];
+      }
+      return acc;
+    }, {});
+
     const user = await User.findByIdAndUpdate(
       req.user.id,
-      { $set: updates },
-      { new: true }
+      { $set: safeUpdates },
+      { new: true, runValidators: true }
     ).select("-password");
+
+    const normalizedUser = user.toObject();
+    normalizedUser.name = normalizedUser.fullName;
 
     res.json({
       success: true,
-      user,
+      user: normalizedUser,
     });
   } catch (error) {
     console.error("Update profile error:", error.message);
@@ -88,23 +122,31 @@ router.post("/profile-image", auth, upload.profileImage, async (req, res) => {
       });
     }
 
+    const uploadedPath = req.file.path || req.file.secure_url || req.file.url;
+    const profileImageUrl = uploadedPath?.startsWith("http")
+      ? uploadedPath
+      : `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+
     // Update user's avatar URL in database
     const user = await User.findByIdAndUpdate(
       req.user.id,
       {
         $set: {
-          avatar: req.file.path,
-          profileImage: req.file.path,
+          profilePicture: profileImageUrl,
         },
       },
       { new: true }
     ).select("-password");
 
+    const normalizedUser = user.toObject();
+    normalizedUser.profileImage = normalizedUser.profilePicture;
+    normalizedUser.avatar = normalizedUser.profilePicture;
+
     res.json({
       success: true,
       message: "Profile image uploaded successfully",
-      profileImageUrl: req.file.path,
-      user,
+      profileImageUrl,
+      user: normalizedUser,
     });
   } catch (error) {
     console.error("Profile image upload error:", error.message);
@@ -125,14 +167,18 @@ router.delete("/profile-image", auth, async (req, res) => {
   try {
     const user = await User.findByIdAndUpdate(
       req.user.id,
-      { $unset: { profileImage: 1, avatar: 1 } },
+      { $unset: { profilePicture: 1 } },
       { new: true }
     ).select("-password");
+
+    const normalizedUser = user.toObject();
+    normalizedUser.profileImage = null;
+    normalizedUser.avatar = null;
 
     res.json({
       success: true,
       message: "Profile image removed",
-      user,
+      user: normalizedUser,
     });
   } catch (error) {
     console.error("Remove profile image error:", error.message);

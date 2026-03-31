@@ -103,37 +103,14 @@ router.get("/my-projects", auth, async (req, res) => {
   }
 });
 
-// @route   GET /api/projects/user/:userId
-// @desc    Get projects by specific user ID
-// @access  Public
-router.get("/user/:userId", async (req, res) => {
-  try {
-    const projects = await Project.find({ owner: req.params.userId })
-      .populate("owner", "fullName email")
-      .sort({ createdAt: -1 });
-
-    res.json({
-      success: true,
-      projects,
-    });
-  } catch (error) {
-    console.error("Get user projects error:", error.message);
-    res.status(500).json({
-      success: false,
-      message: "Server error",
-    });
-  }
-});
-
 // @route   GET /api/projects/:id
 // @desc    Get project by ID
 // @access  Public
 router.get("/:id", async (req, res) => {
   try {
-    const project = await Project.findById(req.params.id).populate(
-      "owner",
-      "fullName email"
-    );
+    const project = await Project.findById(req.params.id)
+      .populate("owner", "fullName email profilePicture")
+      .populate("comments.user", "fullName profilePicture");
 
     if (!project) {
       return res.status(404).json({
@@ -210,11 +187,19 @@ router.post(
 
       // Handle uploaded images
       if (req.files && req.files.length > 0) {
-        projectData.images = req.files.map((file, index) => ({
-          url: file.path,
-          caption: `Project image ${index + 1}`,
-          isMain: index === 0,
-        }));
+        projectData.images = req.files.map((file, index) => {
+          // Normalize file URL for both Cloudinary and local storage
+          let imageUrl = file.path || file.secure_url || file.url;
+          if (!imageUrl?.startsWith("http")) {
+            // Local storage: convert filesystem path to accessible URL
+            imageUrl = `${req.protocol}://${req.get("host")}/uploads/${file.filename}`;
+          }
+          return {
+            url: imageUrl,
+            caption: `Project image ${index + 1}`,
+            isMain: index === 0,
+          };
+        });
       }
 
       console.log("Project data being saved:", projectData);
@@ -286,11 +271,19 @@ router.post(
 
       // Handle uploaded images
       if (req.files && req.files.length > 0) {
-        projectData.images = req.files.map((file, index) => ({
-          url: file.path, // Cloudinary URL
-          caption: `Project image ${index + 1}`,
-          isMain: index === 0, // First image is main
-        }));
+        projectData.images = req.files.map((file, index) => {
+          // Normalize file URL for both Cloudinary and local storage
+          let imageUrl = file.path || file.secure_url || file.url;
+          if (!imageUrl?.startsWith("http")) {
+            // Local storage: convert filesystem path to accessible URL
+            imageUrl = `${req.protocol}://${req.get("host")}/uploads/${file.filename}`;
+          }
+          return {
+            url: imageUrl,
+            caption: `Project image ${index + 1}`,
+            isMain: index === 0, // First image is main
+          };
+        });
       }
 
       const newProject = new Project(projectData);
@@ -479,6 +472,165 @@ router.post("/:id/like", auth, async (req, res) => {
     });
   } catch (error) {
     console.error("Like project error:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+});
+
+// @route   POST /api/projects/:id/comments
+// @desc    Add a comment to a project
+// @access  Private
+router.post("/:id/comments", auth, async (req, res) => {
+  try {
+    const { text } = req.body;
+    const trimmedText = (text || "").trim();
+
+    if (!trimmedText) {
+      return res.status(400).json({
+        success: false,
+        message: "Comment text is required",
+      });
+    }
+
+    const project = await Project.findById(req.params.id);
+
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: "Project not found",
+      });
+    }
+
+    project.comments.push({
+      user: req.user.id,
+      text: trimmedText,
+    });
+
+    await project.save();
+    await project.populate("comments.user", "fullName profilePicture");
+
+    const newComment = project.comments[project.comments.length - 1];
+
+    res.status(201).json({
+      success: true,
+      message: "Comment added",
+      comment: newComment,
+      commentCount: project.comments.length,
+    });
+  } catch (error) {
+    console.error("Add comment error:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+});
+
+// @route   PUT /api/projects/:id/comments/:commentId
+// @desc    Edit a comment on a project
+// @access  Private (comment owner only)
+router.put("/:id/comments/:commentId", auth, async (req, res) => {
+  try {
+    const { text } = req.body;
+    const trimmedText = (text || "").trim();
+
+    if (!trimmedText) {
+      return res.status(400).json({
+        success: false,
+        message: "Comment text is required",
+      });
+    }
+
+    const project = await Project.findById(req.params.id);
+
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: "Project not found",
+      });
+    }
+
+    const comment = project.comments.id(req.params.commentId);
+
+    if (!comment) {
+      return res.status(404).json({
+        success: false,
+        message: "Comment not found",
+      });
+    }
+
+    if (comment.user.toString() !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to edit this comment",
+      });
+    }
+
+    comment.text = trimmedText;
+    comment.editedAt = new Date();
+
+    await project.save();
+    await project.populate("comments.user", "fullName profilePicture");
+
+    const updatedComment = project.comments.id(req.params.commentId);
+
+    res.json({
+      success: true,
+      message: "Comment updated",
+      comment: updatedComment,
+    });
+  } catch (error) {
+    console.error("Edit comment error:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+});
+
+// @route   DELETE /api/projects/:id/comments/:commentId
+// @desc    Delete a comment from a project
+// @access  Private (comment owner only)
+router.delete("/:id/comments/:commentId", auth, async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id);
+
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: "Project not found",
+      });
+    }
+
+    const comment = project.comments.id(req.params.commentId);
+
+    if (!comment) {
+      return res.status(404).json({
+        success: false,
+        message: "Comment not found",
+      });
+    }
+
+    if (comment.user.toString() !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to delete this comment",
+      });
+    }
+
+    comment.deleteOne();
+    await project.save();
+
+    res.json({
+      success: true,
+      message: "Comment deleted",
+      commentId: req.params.commentId,
+      commentCount: project.comments.length,
+    });
+  } catch (error) {
+    console.error("Delete comment error:", error.message);
     res.status(500).json({
       success: false,
       message: "Server error",

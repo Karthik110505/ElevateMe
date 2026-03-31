@@ -294,13 +294,13 @@ const LoginPage = () => {
                   >
                     Sign up as Developer
                   </Link>{" "}
-                  or{" "}
+                  {/* or{" "}
                   <Link
                     to="/employer/signup"
                     className="text-neon-blue hover:underline"
                   >
                     Sign up as Employer
-                  </Link>
+                  </Link> */}
                 </p>
               </div>
             </div>

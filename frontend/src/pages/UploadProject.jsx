@@ -203,6 +203,11 @@ const UploadProject = () => {
       return;
     }
 
+    if (selectedFiles.length === 0) {
+      setUploadError("Thumbnail image is required. Please upload at least one image.");
+      return;
+    }
+
     setIsUploading(true);
     setUploadProgress(0);
 
@@ -318,11 +323,11 @@ const UploadProject = () => {
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6, delay: 0.2 }}
       >
-        <div className="layout-content-container flex flex-col max-w-[680px] flex-1">
+        <div className="layout-content-container flex flex-col max-w-6xl flex-1 w-full">
           {/* Page Title */}
-          <div className="flex flex-wrap justify-between gap-3 p-4">
-            <p className="text-white tracking-light text-[24px] md:text-[28px] font-bold leading-tight min-w-72 font-heading">
-              Upload Project
+          <div className="flex flex-wrap justify-between gap-3 p-3">
+            <p className="text-white tracking-light text-[20px] md:text-[22px] font-bold leading-tight min-w-72 font-heading">
+              Upload Project  
             </p>
           </div>
 
@@ -331,6 +336,7 @@ const UploadProject = () => {
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.4 }}
+            className="space-y-2"
           >
             {/* Error Message */}
             {uploadError && (
@@ -346,113 +352,104 @@ const UploadProject = () => {
               </div>
             )}
 
-            {/* Project Title */}
-            <div className="flex max-w-full md:max-w-[400px] flex-wrap items-end gap-4 px-4 py-2">
-              <label className="flex flex-col min-w-40 flex-1">
-                <p className="text-white text-base font-medium leading-normal pb-2 font-sans">
-                  Project Title
-                </p>
-                <input
-                  type="text"
-                  name="title"
-                  placeholder="Enter project title"
-                  className="w-full p-3 border border-neon-blue/30 bg-dark-800 text-white rounded-xl h-12 placeholder:text-neon-blue/70 focus:border-neon-blue transition-all duration-300"
-                  value={formData.title}
-                  onChange={handleInputChange}
-                />
-              </label>
-            </div>
+            {/* Main Layout: Left (Links) | Center (Description) | Right (Tags) */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 px-4 items-start">
+              {/* Left Column: Video, GitHub, Live Links */}
+              <div className="flex flex-col gap-2 lg:col-span-4">
+                <label className="flex flex-col">
+                  <p className="text-white text-base font-medium leading-normal pb-1 font-sans">
+                    Project Title
+                  </p>
+                  <input
+                    type="text"
+                    name="title"
+                    placeholder="Enter project title"
+                    className="w-full p-2 text-sm border border-neon-blue/30 bg-dark-800 text-white rounded-lg h-9 placeholder:text-neon-blue/70 focus:border-neon-blue transition-all duration-300"
+                    value={formData.title}
+                    onChange={handleInputChange}
+                  />
+                </label>
 
-            {/* Video Demo */}
-            <div className="flex max-w-full md:max-w-[400px] flex-wrap items-end gap-4 px-4 py-2">
-              <label className="flex flex-col min-w-40 flex-1">
-                <p className="text-white text-base font-medium leading-normal pb-2 font-sans">
-                  Video Demo (or YouTube/Vimeo Link)
-                </p>
-                <input
-                  type="url"
-                  name="videoDemo"
-                  placeholder="Upload video or paste link"
-                  className="w-full p-3 border border-neon-blue/30 bg-dark-800 text-white rounded-xl h-12 placeholder:text-neon-blue/70 focus:border-neon-blue transition-all duration-300"
-                  value={formData.videoDemo}
-                  onChange={handleInputChange}
-                />
-              </label>
-            </div>
+                <label className="flex flex-col">
+                  <p className="text-white text-xs font-medium leading-normal pb-1 font-sans">
+                    Video Demo (or YouTube/Vimeo Link)
+                  </p>
+                  <input
+                    type="url"
+                    name="videoDemo"
+                    placeholder="Upload video or paste link"
+                    className="w-full p-2 text-xs border border-neon-blue/30 bg-dark-800 text-white rounded-lg h-9 placeholder:text-neon-blue/70 focus:border-neon-blue transition-all duration-300"
+                    value={formData.videoDemo}
+                    onChange={handleInputChange}
+                  />
+                </label>
 
-            {/* Description */}
-            <div className="flex max-w-full md:max-w-[400px] flex-wrap items-end gap-4 px-4 py-2">
-              <label className="flex flex-col min-w-40 flex-1">
-                <p className="text-white text-base font-medium leading-normal pb-2 font-sans">
+                <label className="flex flex-col">
+                  <p className="text-white text-xs font-medium leading-normal pb-1 font-sans">
+                    GitHub Link
+                  </p>
+                  <input
+                    type="url"
+                    name="githubLink"
+                    placeholder="Your project's GitHub repository"
+                    className="w-full p-2 text-xs border border-neon-blue/30 bg-dark-800 text-white rounded-lg h-9 placeholder:text-neon-blue/70 focus:border-neon-blue transition-all duration-300"
+                    value={formData.githubLink}
+                    onChange={handleInputChange}
+                  />
+                </label>
+
+                <label className="flex flex-col">
+                  <p className="text-white text-xs font-medium leading-normal pb-1 font-sans">
+                    Live Site Link (Optional)
+                  </p>
+                  <input
+                    type="url"
+                    name="liveSiteLink"
+                    placeholder="Link to the live project site"
+                    className="w-full p-2 text-xs border border-neon-blue/30 bg-dark-800 text-white rounded-lg h-9 placeholder:text-neon-blue/70 focus:border-neon-blue transition-all duration-300"
+                    value={formData.liveSiteLink}
+                    onChange={handleInputChange}
+                  />
+                </label>
+              </div>
+
+              {/* Center Column: Description */}
+              <label className="flex flex-col lg:col-span-5">
+                <p className="text-white text-xs font-medium leading-normal pb-1 font-sans">
                   Description
                 </p>
                 <textarea
                   name="description"
                   placeholder="Describe your project"
-                  className="w-full p-3 border border-neon-blue/30 bg-dark-800 text-white rounded-xl min-h-28 placeholder:text-neon-blue/70 focus:border-neon-blue transition-all duration-300 resize-none"
+                  className="w-full p-3 border border-neon-blue/30 bg-dark-800 text-white rounded-lg placeholder:text-neon-blue/70 focus:border-neon-blue transition-all duration-300 resize-none flex-1 text-sm min-h-[260px]"
                   value={formData.description}
                   onChange={handleInputChange}
+                  rows="9"
                 />
               </label>
-            </div>
 
-            {/* GitHub Link */}
-            <div className="flex max-w-full md:max-w-[400px] flex-wrap items-end gap-4 px-4 py-2">
-              <label className="flex flex-col min-w-40 flex-1">
-                <p className="text-white text-base font-medium leading-normal pb-2 font-sans">
-                  GitHub Link
-                </p>
-                <input
-                  type="url"
-                  name="githubLink"
-                  placeholder="Link to your project's GitHub repository"
-                  className="w-full p-3 border border-neon-blue/30 bg-dark-800 text-white rounded-xl h-12 placeholder:text-neon-blue/70 focus:border-neon-blue transition-all duration-300"
-                  value={formData.githubLink}
-                  onChange={handleInputChange}
-                />
-              </label>
-            </div>
-
-            {/* Live Site Link */}
-            <div className="flex max-w-full md:max-w-[400px] flex-wrap items-end gap-4 px-4 py-2">
-              <label className="flex flex-col min-w-40 flex-1">
-                <p className="text-white text-base font-medium leading-normal pb-2 font-sans">
-                  Live Site Link (Optional)
-                </p>
-                <input
-                  type="url"
-                  name="liveSiteLink"
-                  placeholder="Link to the live project site"
-                  className="w-full p-3 border border-neon-blue/30 bg-dark-800 text-white rounded-xl h-12 placeholder:text-neon-blue/70 focus:border-neon-blue transition-all duration-300"
-                  value={formData.liveSiteLink}
-                  onChange={handleInputChange}
-                />
-              </label>
-            </div>
-
-            {/* Tags */}
-            <div className="flex max-w-full md:max-w-[600px] flex-wrap items-start gap-4 px-4 py-2">
-              <div className="flex flex-col min-w-40 flex-1">
-                <p className="text-white text-base font-medium leading-normal pb-2 font-sans">
+              {/* Right Column: Tags Section */}
+              <div className="flex flex-col gap-1 lg:col-span-3 rounded-lg border border-neon-blue/20 bg-dark-800/20 p-2">
+                <p className="text-white text-xs font-medium leading-normal pb-1 font-sans">
                   Tags
                 </p>
 
                 {/* Selected Tags Display */}
                 {formData.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-3 p-2 border border-neon-blue/20 rounded-xl bg-dark-800/50">
+                  <div className="flex flex-wrap gap-0.5 p-1 border border-neon-blue/20 rounded-lg bg-dark-800/50 mb-1">
                     {formData.tags.map((tag, index) => (
                       <span
                         key={index}
-                        className="inline-flex items-center gap-2 px-2 py-1 bg-neon-blue/20 border border-neon-blue/40 rounded-full text-white text-sm"
+                        className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-neon-blue/20 border border-neon-blue/40 rounded-full text-white text-xs"
                       >
                         {tag}
                         <button
                           type="button"
                           onClick={() => removeTag(tag)}
-                          className="hover:bg-red-500/30 rounded-full p-1 transition-colors"
+                          className="hover:bg-red-500/30 rounded-full p-0.5 transition-colors"
                         >
                           <svg
-                            className="w-3 h-3"
+                            className="w-2 h-2"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -471,18 +468,21 @@ const UploadProject = () => {
                 )}
 
                 {/* Predefined Tags */}
-                <div className="mb-3">
-                  <p className="text-neon-blue/80 text-sm font-medium mb-2">
-                    Popular Tags:
+                <div
+                  className="flex-1 overflow-y-scroll max-h-40 pr-1 border border-neon-blue/20 rounded-md bg-dark-900/30"
+                  style={{ scrollbarWidth: "thin", scrollbarColor: "#06b6d4 #0b1228" }}
+                >
+                  <p className="text-neon-blue/80 text-xs font-medium mb-1">
+                    Popular:
                   </p>
-                  <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
+                  <div className="flex flex-wrap gap-1">
                     {predefinedTags.map((tag, index) => (
                       <button
                         key={index}
                         type="button"
                         onClick={() => addTag(tag)}
                         disabled={formData.tags.includes(tag)}
-                        className={`px-2 py-1 text-sm rounded-full border transition-all duration-200 ${
+                        className={`px-1.5 py-0.5 text-xs rounded-full border transition-all duration-200 ${
                           formData.tags.includes(tag)
                             ? "bg-neon-blue/30 border-neon-blue/50 text-white cursor-not-allowed opacity-50"
                             : "bg-dark-800 border-neon-blue/30 text-white hover:bg-neon-blue/20 hover:border-neon-blue/60 cursor-pointer"
@@ -495,15 +495,15 @@ const UploadProject = () => {
                 </div>
 
                 {/* Add Custom Tag */}
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-1 mt-1">
                   {!showTagInput ? (
                     <button
                       type="button"
                       onClick={() => setShowTagInput(true)}
-                      className="flex items-center gap-2 px-4 py-2 bg-accent-purple/20 border border-accent-purple/40 rounded-xl text-white hover:bg-accent-purple/30 transition-all duration-200 self-start"
+                      className="flex items-center gap-1 px-2 py-0.5 text-xs bg-accent-purple/20 border border-accent-purple/40 rounded-lg text-white hover:bg-accent-purple/30 transition-all duration-200 self-start"
                     >
                       <svg
-                        className="w-4 h-4"
+                        className="w-2.5 h-2.5"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -515,35 +515,44 @@ const UploadProject = () => {
                           d="M12 4v16m8-8H4"
                         />
                       </svg>
-                      Add Custom Tag
+                      Add
                     </button>
                   ) : (
-                    <form onSubmit={handleNewTagSubmit} className="flex gap-2">
+                    <div className="flex flex-col gap-1">
                       <input
                         type="text"
                         value={newTag}
                         onChange={(e) => setNewTag(e.target.value)}
-                        placeholder="Enter custom tag"
-                        className="flex-1 p-2 border border-neon-blue/30 bg-dark-800 text-white rounded-lg placeholder:text-neon-blue/70 focus:border-neon-blue transition-all duration-300"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleNewTagSubmit(e);
+                          }
+                        }}
+                        placeholder="Custom tag"
+                        className="flex-1 p-1 text-xs border border-neon-blue/30 bg-dark-800 text-white rounded-md placeholder:text-neon-blue/70 focus:border-neon-blue transition-all duration-300"
                         autoFocus
                       />
-                      <button
-                        type="submit"
-                        className="px-4 py-2 bg-neon-blue/30 border border-neon-blue/50 rounded-lg text-white hover:bg-neon-blue/40 transition-all duration-200"
-                      >
-                        Add
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowTagInput(false);
-                          setNewTag("");
-                        }}
-                        className="px-4 py-2 bg-red-500/20 border border-red-500/40 rounded-lg text-white hover:bg-red-500/30 transition-all duration-200"
-                      >
-                        Cancel
-                      </button>
-                    </form>
+                      <div className="flex gap-1">
+                        <button
+                          type="button"
+                          onClick={handleNewTagSubmit}
+                          className="flex-1 px-2 py-0.5 text-xs bg-neon-blue/30 border border-neon-blue/50 rounded-md text-white hover:bg-neon-blue/40 transition-all duration-200"
+                        >
+                          Add
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowTagInput(false);
+                            setNewTag("");
+                          }}
+                          className="flex-1 px-2 py-0.5 text-xs bg-red-500/20 border border-red-500/40 rounded-md text-white hover:bg-red-500/30 transition-all duration-200"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
                   )}
                 </div>
               </div>
@@ -551,9 +560,9 @@ const UploadProject = () => {
 
             {/* Upload Progress (show only when uploading) */}
             {isUploading && (
-              <div className="flex flex-col gap-3 p-4">
+              <div className="flex flex-col gap-2 px-4">
                 <div className="flex gap-6 justify-between">
-                  <p className="text-white text-base font-medium leading-normal font-sans">
+                  <p className="text-white text-sm font-medium leading-normal font-sans">
                     Uploading...
                   </p>
                 </div>
@@ -563,7 +572,7 @@ const UploadProject = () => {
                     style={{ width: `${uploadProgress}%` }}
                   />
                 </div>
-                <p className="text-[#8dcece] text-sm font-normal leading-normal font-sans">
+                <p className="text-[#8dcece] text-xs font-normal leading-normal font-sans">
                   {uploadProgress}%
                 </p>
               </div>
@@ -571,13 +580,13 @@ const UploadProject = () => {
 
             {/* File Upload Area */}
             <motion.div
-              className="flex flex-col p-4"
+              className="flex flex-col px-4 lg:px-0 lg:max-w-5xl lg:mx-auto w-full"
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.6 }}
             >
               <motion.div
-                className={`flex flex-col items-center gap-4 rounded-xl border-2 border-dashed px-4 py-8 transition-colors ${
+                className={`flex flex-col items-center gap-2 rounded-lg border-2 border-dashed px-3 py-4 transition-colors ${
                   isDragOver
                     ? "border-neon-blue bg-neon-blue/10"
                     : "border-[#2e6b6b]"
@@ -592,11 +601,11 @@ const UploadProject = () => {
                 }}
                 transition={{ duration: 0.2 }}
               >
-                <div className="flex max-w-[400px] flex-col items-center gap-2">
-                  <p className="text-white text-lg font-bold leading-tight tracking-[-0.015em] max-w-[400px] text-center font-heading">
-                    Upload Thumbnails/Snapshots
+                <div className="flex max-w-[350px] flex-col items-center gap-1">
+                  <p className="text-white text-sm font-bold leading-tight tracking-[-0.015em] max-w-[350px] text-center font-heading">
+                    Upload Thumbnails/Snapshots <span className="text-red-500">*</span>
                   </p>
-                  <p className="text-white text-sm font-normal leading-normal max-w-[400px] text-center font-sans">
+                  <p className="text-white text-xs font-normal leading-normal max-w-[350px] text-center font-sans">
                     Drag and drop files here, or click to browse
                   </p>
                 </div>
@@ -614,39 +623,39 @@ const UploadProject = () => {
                     className="hidden"
                     onClick={() => console.log("File input clicked")}
                   />
-                  <span className="flex min-w-[84px] max-w-[400px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-10 px-4 bg-[#204b4b] text-white text-sm font-bold leading-normal tracking-[0.015em] font-sans">
+                  <span className="flex min-w-[80px] max-w-[300px] cursor-pointer items-center justify-center overflow-hidden rounded-full h-8 px-3 bg-[#204b4b] text-white text-xs font-bold leading-normal tracking-[0.015em] font-sans">
                     {imagePreviews.length > 0
-                      ? `${imagePreviews.length} Files Selected`
-                      : "Browse Files"}
+                      ? `${imagePreviews.length} Files`
+                      : "Browse"}
                   </span>
                 </label>
               </motion.div>
 
               {/* Image Previews */}
               {imagePreviews.length > 0 && (
-                <div className="mt-4">
-                  <p className="text-white text-base font-medium leading-normal pb-2 font-sans">
+                <div className="mt-2">
+                  <p className="text-white text-sm font-medium leading-normal pb-1 font-sans">
                     Selected Images ({imagePreviews.length})
                   </p>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
                     {imagePreviews.map((imageData, index) => (
                       <div
                         key={index}
-                        className="relative group rounded-lg overflow-hidden border border-neon-blue/30 bg-dark-800"
+                        className="relative group rounded-md overflow-hidden border border-neon-blue/30 bg-dark-800"
                       >
                         <img
                           src={imageData.preview}
                           alt={`Preview ${index + 1}`}
-                          className="w-full h-24 object-cover"
+                          className="w-full h-16 object-cover"
                         />
                         <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
                           <button
                             type="button"
                             onClick={() => removeImage(index)}
-                            className="bg-red-500/80 hover:bg-red-500 text-white rounded-full p-1 transition-colors"
+                            className="bg-red-500/80 hover:bg-red-500 text-white rounded-full p-0.5 transition-colors"
                           >
                             <svg
-                              className="w-3 h-3"
+                              className="w-2.5 h-2.5"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -660,7 +669,7 @@ const UploadProject = () => {
                             </svg>
                           </button>
                         </div>
-                        <div className="p-1">
+                        <div className="p-0.5">
                           <p className="text-white text-xs truncate">
                             {imageData.name}
                           </p>
@@ -677,7 +686,7 @@ const UploadProject = () => {
 
             {/* Submit Button */}
             <motion.div
-              className="flex px-4 py-3 justify-center"
+              className="flex px-4 justify-center"
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.8 }}

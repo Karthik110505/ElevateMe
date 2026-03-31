@@ -5,11 +5,21 @@ import TopNavigation from "../components/TopNavigation";
 const ProjectDetail = () => {
   const { projectId } = useParams();
   const navigate = useNavigate();
+  const API_BASE = import.meta.env.PROD
+    ? "https://your-domain.com"
+    : "http://localhost:3001";
   const [project, setProject] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [commentText, setCommentText] = useState("");
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [commentError, setCommentError] = useState("");
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editingCommentText, setEditingCommentText] = useState("");
+  const [commentActionError, setCommentActionError] = useState("");
+  const [commentActionLoadingId, setCommentActionLoadingId] = useState(null);
 
   // Check authentication status
   useEffect(() => {
@@ -26,7 +36,7 @@ const ProjectDetail = () => {
   const fetchCurrentUser = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:3001/api/users/profile", {
+      const response = await fetch(`${API_BASE}/api/users/profile`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -41,6 +51,19 @@ const ProjectDetail = () => {
     }
   };
 
+  const formatCommentDate = (dateString) => {
+    const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return "Just now";
+
+    return date.toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  };
+
   // Handle like/unlike project
   const handleLikeProject = async () => {
     if (!isLoggedIn) {
@@ -51,7 +74,7 @@ const ProjectDetail = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `http://localhost:3001/api/projects/${projectId}/like`,
+        `${API_BASE}/api/projects/${projectId}/like`,
         {
           method: "POST",
           headers: {
@@ -74,6 +97,155 @@ const ProjectDetail = () => {
     }
   };
 
+  const handleSubmitComment = async (e) => {
+    e.preventDefault();
+
+    if (!isLoggedIn) {
+      navigate("/login");
+      return;
+    }
+
+    const trimmedComment = commentText.trim();
+    if (!trimmedComment) {
+      setCommentError("Please write a comment before posting.");
+      return;
+    }
+
+    try {
+      setIsSubmittingComment(true);
+      setCommentError("");
+
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_BASE}/api/projects/${projectId}/comments`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ text: trimmedComment }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Failed to add comment");
+      }
+
+      setProject((prev) => ({
+        ...prev,
+        comments: [data.comment, ...(prev.comments || [])],
+      }));
+      setCommentText("");
+    } catch (error) {
+      setCommentError(error.message || "Failed to post comment.");
+    } finally {
+      setIsSubmittingComment(false);
+    }
+  };
+
+  const isOwnComment = (comment) => {
+    return (
+      !!currentUser?._id &&
+      !!comment?.user?._id &&
+      String(currentUser._id) === String(comment.user._id)
+    );
+  };
+
+  const startEditingComment = (comment) => {
+    setCommentActionError("");
+    setEditingCommentId(comment._id);
+    setEditingCommentText(comment.text || "");
+  };
+
+  const cancelEditingComment = () => {
+    setEditingCommentId(null);
+    setEditingCommentText("");
+  };
+
+  const handleUpdateComment = async (commentId) => {
+    const trimmedComment = editingCommentText.trim();
+    if (!trimmedComment) {
+      setCommentActionError("Comment cannot be empty.");
+      return;
+    }
+
+    try {
+      setCommentActionError("");
+      setCommentActionLoadingId(commentId);
+
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `${API_BASE}/api/projects/${projectId}/comments/${commentId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ text: trimmedComment }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Failed to update comment");
+      }
+
+      setProject((prev) => ({
+        ...prev,
+        comments: (prev.comments || []).map((comment) =>
+          comment._id === commentId ? data.comment : comment
+        ),
+      }));
+
+      cancelEditingComment();
+    } catch (error) {
+      setCommentActionError(error.message || "Failed to update comment.");
+    } finally {
+      setCommentActionLoadingId(null);
+    }
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    try {
+      setCommentActionError("");
+      setCommentActionLoadingId(commentId);
+
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `${API_BASE}/api/projects/${projectId}/comments/${commentId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Failed to delete comment");
+      }
+
+      setProject((prev) => ({
+        ...prev,
+        comments: (prev.comments || []).filter(
+          (comment) => comment._id !== commentId
+        ),
+      }));
+
+      if (editingCommentId === commentId) {
+        cancelEditingComment();
+      }
+    } catch (error) {
+      setCommentActionError(error.message || "Failed to delete comment.");
+    } finally {
+      setCommentActionLoadingId(null);
+    }
+  };
+
   // Fetch project data from API
   useEffect(() => {
     const fetchProject = async () => {
@@ -87,11 +259,7 @@ const ProjectDetail = () => {
         }
 
         const response = await fetch(
-          `${
-            import.meta.env.PROD
-              ? "https://your-domain.com"
-              : "http://localhost:3001"
-          }/api/projects/${projectId}`,
+          `${API_BASE}/api/projects/${projectId}`,
           { headers }
         );
 
@@ -113,7 +281,7 @@ const ProjectDetail = () => {
           if (!hasViewed) {
             try {
               const viewResponse = await fetch(
-                `http://localhost:3001/api/projects/${projectId}/view`,
+                `${API_BASE}/api/projects/${projectId}/view`,
                 {
                   method: "POST",
                 }
@@ -310,9 +478,24 @@ const ProjectDetail = () => {
             {project.videoUrl ? (
               <div className="aspect-video bg-black rounded-lg overflow-hidden border border-neon-blue/20 shadow-lg">
                 <iframe
-                  src={project.videoUrl
-                    .replace("youtu.be/", "youtube.com/embed/")
-                    .replace("watch?v=", "embed/")}
+                  src={(() => {
+                    let videoUrl = project.videoUrl;
+                    let videoId = "";
+
+                    // Extract video ID from different YouTube URL formats
+                    if (videoUrl.includes("youtu.be/")) {
+                      videoId = videoUrl.split("youtu.be/")[1].split("?")[0];
+                    } else if (videoUrl.includes("watch?v=")) {
+                      videoId = videoUrl.split("watch?v=")[1].split("&")[0];
+                    } else if (videoUrl.includes("embed/")) {
+                      videoId = videoUrl.split("embed/")[1].split("?")[0];
+                    }
+
+                    // Return properly formatted embed URL
+                    return videoId
+                      ? `https://www.youtube.com/embed/${videoId}`
+                      : videoUrl;
+                  })()}
                   title={project.title}
                   className="w-full h-full"
                   frameBorder="0"
@@ -469,6 +652,160 @@ const ProjectDetail = () => {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Comments Section */}
+        <div className="mb-8">
+          <h3 className="text-lg font-semibold mb-4 text-white">
+            Comments ({project.comments?.length || 0})
+          </h3>
+
+          {isLoggedIn ? (
+            <form
+              onSubmit={handleSubmitComment}
+              className="mb-5 bg-dark-800/40 border border-neon-blue/20 rounded-lg p-3"
+            >
+              <textarea
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                placeholder="Add a comment..."
+                className="w-full min-h-24 bg-dark-900 border border-neon-blue/20 rounded-md p-3 text-sm text-white placeholder-gray-400 focus:outline-none focus:border-neon-blue resize-y"
+                maxLength={500}
+              />
+              <div className="mt-2 flex items-center justify-between gap-3">
+                <p className="text-xs text-gray-400">{commentText.length}/500</p>
+                <button
+                  type="submit"
+                  disabled={isSubmittingComment}
+                  className="px-4 py-2 bg-neon-blue text-dark-900 rounded-md text-sm font-medium hover:bg-neon-blue/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {isSubmittingComment ? "Posting..." : "Comment"}
+                </button>
+              </div>
+              {commentError && (
+                <p className="text-red-400 text-sm mt-2">{commentError}</p>
+              )}
+            </form>
+          ) : (
+            <div className="mb-5 bg-dark-800/40 border border-neon-blue/20 rounded-lg p-3 flex items-center justify-between gap-3">
+              <p className="text-sm text-gray-300">
+                Login to join the discussion.
+              </p>
+              <button
+                onClick={() => navigate("/login")}
+                className="px-3 py-1.5 text-xs bg-neon-blue/20 text-neon-blue hover:bg-neon-blue/30 rounded-md transition-colors border border-neon-blue/30 hover:border-neon-blue/50"
+              >
+                Login
+              </button>
+            </div>
+          )}
+
+          {project.comments && project.comments.length > 0 ? (
+            <div className="space-y-3">
+              {[...project.comments]
+                .sort(
+                  (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+                )
+                .map((comment) => (
+                  <div
+                    key={comment._id}
+                    className="bg-dark-800/30 border border-neon-blue/10 rounded-lg p-3"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div
+                        className="w-9 h-9 bg-center bg-no-repeat bg-cover rounded-full border border-neon-blue/20 flex-shrink-0"
+                        style={{
+                          backgroundImage: `url("${
+                            comment.user?.profilePicture ||
+                            "https://via.placeholder.com/36"
+                          }")`,
+                        }}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-sm font-medium text-white">
+                              {comment.user?.fullName || "User"}
+                            </p>
+                            <span className="text-xs text-gray-400">
+                              {formatCommentDate(comment.createdAt)}
+                            </span>
+                            {comment.editedAt && (
+                              <span className="text-xs text-gray-500">(edited)</span>
+                            )}
+                          </div>
+                          {isOwnComment(comment) && (
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => startEditingComment(comment)}
+                                disabled={commentActionLoadingId === comment._id}
+                                className="text-xs text-neon-blue hover:text-neon-blue/80 disabled:opacity-60"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDeleteComment(comment._id)}
+                                disabled={commentActionLoadingId === comment._id}
+                                className="text-xs text-red-400 hover:text-red-300 disabled:opacity-60"
+                              >
+                                {commentActionLoadingId === comment._id
+                                  ? "Deleting..."
+                                  : "Delete"}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        {editingCommentId === comment._id ? (
+                          <div className="mt-2">
+                            <textarea
+                              value={editingCommentText}
+                              onChange={(e) => setEditingCommentText(e.target.value)}
+                              className="w-full min-h-20 bg-dark-900 border border-neon-blue/20 rounded-md p-2 text-sm text-white placeholder-gray-400 focus:outline-none focus:border-neon-blue resize-y"
+                              maxLength={500}
+                            />
+                            <div className="mt-2 flex items-center justify-between gap-3">
+                              <p className="text-xs text-gray-400">
+                                {editingCommentText.length}/500
+                              </p>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={cancelEditingComment}
+                                  disabled={commentActionLoadingId === comment._id}
+                                  className="px-3 py-1.5 text-xs bg-dark-700 text-gray-200 rounded-md hover:bg-dark-600 disabled:opacity-60"
+                                >
+                                  Cancel
+                                </button>
+                                <button
+                                  onClick={() => handleUpdateComment(comment._id)}
+                                  disabled={commentActionLoadingId === comment._id}
+                                  className="px-3 py-1.5 text-xs bg-neon-blue text-dark-900 rounded-md hover:bg-neon-blue/90 disabled:opacity-60"
+                                >
+                                  {commentActionLoadingId === comment._id
+                                    ? "Saving..."
+                                    : "Save"}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-200 mt-1 whitespace-pre-wrap break-words">
+                            {comment.text}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              {commentActionError && (
+                <p className="text-red-400 text-sm">{commentActionError}</p>
+              )}
+            </div>
+          ) : (
+            <div className="bg-dark-800/30 border border-neon-blue/10 rounded-lg p-6 text-center">
+              <p className="text-gray-400 text-sm">No comments yet. Be the first to comment.</p>
+            </div>
+          )}
         </div>
 
         {/* Additional Information */}

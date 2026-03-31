@@ -13,17 +13,20 @@ const validateProject = [
     .withMessage("Description must be between 10 and 1000 characters"),
 
   body("githubLink")
-    .optional()
+    .optional({ checkFalsy: true })
+    .trim()
     .isURL()
     .withMessage("GitHub link must be a valid URL"),
 
   body("liveSiteLink")
-    .optional()
+    .optional({ checkFalsy: true })
+    .trim()
     .isURL()
     .withMessage("Live site link must be a valid URL"),
 
   body("videoDemo")
-    .optional()
+    .optional({ checkFalsy: true })
+    .trim()
     .isURL()
     .withMessage("Video demo must be a valid URL"),
 

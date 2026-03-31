@@ -89,7 +89,7 @@ const PublicProfile = ({ isOwner = false }) => {
   // Initialize edit data when userData changes
   useEffect(() => {
     if (userData) {
-      setEditName(userData.name || "");
+      setEditName(userData.fullName || userData.name || "");
       setEditBio(userData.bio || "");
       setEditSkills(userData.skills || []);
       setEditSocialLinks({
@@ -151,7 +151,7 @@ const PublicProfile = ({ isOwner = false }) => {
 
   const handleNameSave = async () => {
     if (editName.trim()) {
-      const success = await updateUserProfile({ name: editName.trim() });
+      const success = await updateUserProfile({ fullName: editName.trim() });
       if (success) {
         setIsEditingName(false);
       }
@@ -159,7 +159,7 @@ const PublicProfile = ({ isOwner = false }) => {
   };
 
   const handleNameCancel = () => {
-    setEditName(userData?.name || "");
+    setEditName(userData?.fullName || userData?.name || "");
     setIsEditingName(false);
   };
 
@@ -379,9 +379,9 @@ const PublicProfile = ({ isOwner = false }) => {
       return;
     }
 
-    // Validate file size (2MB limit)
-    if (file.size > 2 * 1024 * 1024) {
-      alert("File size should be less than 2MB");
+    // Validate file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      alert("File size should be less than 5MB");
       return;
     }
 
@@ -411,20 +411,22 @@ const PublicProfile = ({ isOwner = false }) => {
       );
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || "Failed to upload profile image");
       }
 
       const data = await response.json();
       if (data.success) {
-        setUserData((prev) => ({
-          ...prev,
-          avatar: data.profileImageUrl,
-        }));
-        localStorage.setItem(
-          "user",
-          JSON.stringify({ ...userData, avatar: data.profileImageUrl })
-        );
+        setUserData((prev) => {
+          const nextUserData = {
+            ...prev,
+            avatar: data.profileImageUrl,
+            profileImage: data.profileImageUrl,
+            profilePicture: data.profileImageUrl,
+          };
+          localStorage.setItem("user", JSON.stringify(nextUserData));
+          return nextUserData;
+        });
         setShowProfilePhotoMenu(false);
       } else {
         throw new Error(data.message || "Failed to upload profile image");
@@ -628,6 +630,7 @@ const PublicProfile = ({ isOwner = false }) => {
   // Get user's profile image with comprehensive fallback logic
   const profileImage =
     userData?.profileImage || // Custom uploaded profile image
+    userData?.profilePicture || // Schema-native profile picture field
     userData?.avatar || // Generic avatar field
     userData?.picture || // Google OAuth profile picture
     userData?.photo || // Alternative photo field

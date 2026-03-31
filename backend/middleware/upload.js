@@ -2,52 +2,78 @@ const multer = require("multer");
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const cloudinary = require("cloudinary").v2;
 const path = require("path");
+const fs = require("fs");
 
-// Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
+
+const hasCloudinaryConfig =
+  !!process.env.CLOUDINARY_CLOUD_NAME &&
+  !!process.env.CLOUDINARY_API_KEY &&
+  !!process.env.CLOUDINARY_API_SECRET;
+
+// Configure Cloudinary when credentials are available
+if (hasCloudinaryConfig) {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+  });
+}
+
+const localUploadStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = path.join(__dirname, "..", "uploads");
+    fs.mkdirSync(uploadDir, { recursive: true });
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const fileExt = path.extname(file.originalname || "").toLowerCase();
+    const safeExt = fileExt || ".jpg";
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    cb(null, `${file.fieldname}-${uniqueSuffix}${safeExt}`);
+  },
 });
 
 // Profile image specific storage configuration
-const profileImageStorage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: "elevateme/profile-images",
-    allowed_formats: ["jpg", "jpeg", "png", "gif", "webp"],
-    public_id: (req, file) => {
-      // Use user ID for profile images to make them unique and replaceable
-      return `profile-${req.user.id}-${Date.now()}`;
-    },
-    transformation: [
-      {
-        width: 400,
-        height: 400,
-        crop: "fill",
-        gravity: "face",
-        quality: "auto:good",
+const profileImageStorage = hasCloudinaryConfig
+  ? new CloudinaryStorage({
+      cloudinary: cloudinary,
+      params: {
+        folder: "elevateme/profile-images",
+        allowed_formats: ["jpg", "jpeg", "png", "gif", "webp"],
+        public_id: (req, file) => {
+          return `profile-${req.user.id}-${Date.now()}`;
+        },
+        transformation: [
+          {
+            width: 400,
+            height: 400,
+            crop: "fill",
+            gravity: "face",
+            quality: "auto:good",
+          },
+        ],
       },
-    ],
-  },
-});
+    })
+  : localUploadStorage;
 
 // Regular project images storage configuration
-const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: "elevateme",
-    allowed_formats: ["jpg", "jpeg", "png", "gif", "webp"],
-    public_id: (req, file) => {
-      // Generate a unique filename
-      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-      return `${file.fieldname}-${uniqueSuffix}`;
-    },
-    transformation: [
-      { width: 1200, height: 800, crop: "limit", quality: "auto:good" },
-    ],
-  },
-});
+const storage = hasCloudinaryConfig
+  ? new CloudinaryStorage({
+      cloudinary: cloudinary,
+      params: {
+        folder: "elevateme",
+        allowed_formats: ["jpg", "jpeg", "png", "gif", "webp"],
+        public_id: (req, file) => {
+          const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+          return `${file.fieldname}-${uniqueSuffix}`;
+        },
+        transformation: [
+          { width: 1200, height: 800, crop: "limit", quality: "auto:good" },
+        ],
+      },
+    })
+  : localUploadStorage;
 
 // File filter function
 const fileFilter = (req, file, cb) => {
@@ -72,7 +98,7 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
+    fileSize: MAX_IMAGE_SIZE_BYTES,
     files: 5, // Maximum 5 files at once
   },
   fileFilter: fileFilter,
@@ -82,7 +108,7 @@ const upload = multer({
 const profileImageUpload = multer({
   storage: profileImageStorage,
   limits: {
-    fileSize: 2 * 1024 * 1024, // 2MB limit for profile images
+    fileSize: MAX_IMAGE_SIZE_BYTES,
     files: 1, // Only 1 profile image at a time
   },
   fileFilter: fileFilter,
@@ -111,7 +137,7 @@ const handleMulterError = (err, req, res, next) => {
     }
   }
 
-  if (err.message.includes("Only image files")) {
+  if (err?.message?.includes("Only image files")) {
     return res.status(400).json({
       success: false,
       message: err.message,

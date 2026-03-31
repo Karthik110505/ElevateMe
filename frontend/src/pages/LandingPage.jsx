@@ -487,7 +487,7 @@ const LandingPage = () => {
                     className="text-[#8dcece] text-base font-normal"
                     variants={slideUpVariants}
                   >
-                    © 2025 ElevateMe. All rights reserved.
+                    © 2026 ElevateMe. All rights reserved.
                   </motion.p>
                 </motion.div>
               </div>

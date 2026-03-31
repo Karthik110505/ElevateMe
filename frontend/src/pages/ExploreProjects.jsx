@@ -596,7 +596,7 @@ const ExploreProjects = () => {
               </a>
             </div>
             <p className="text-cyan-300/70 text-base font-normal leading-normal font-sans">
-              @2025 ElevateMe. All rights reserved.
+              @2026 ElevateMe. All rights reserved.
             </p>
           </div>
         </div>

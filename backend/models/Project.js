@@ -116,6 +116,29 @@ const projectSchema = new mongoose.Schema(
         ref: "User",
       },
     ],
+    comments: [
+      {
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
+        },
+        text: {
+          type: String,
+          required: [true, "Comment text is required"],
+          trim: true,
+          maxlength: [500, "Comment cannot be more than 500 characters"],
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+        editedAt: {
+          type: Date,
+          default: null,
+        },
+      },
+    ],
 
     // Project metadata
     difficulty: {
@@ -165,6 +188,11 @@ const projectSchema = new mongoose.Schema(
 // Virtual for like count
 projectSchema.virtual("likeCount").get(function () {
   return this.likes.length;
+});
+
+// Virtual for comment count
+projectSchema.virtual("commentCount").get(function () {
+  return this.comments.length;
 });
 
 // Virtual for main image

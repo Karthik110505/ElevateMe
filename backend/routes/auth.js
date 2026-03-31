@@ -9,7 +9,24 @@ const axios = require("axios");
 const router = express.Router();
 
 // OAuth clients
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const googleClient = process.env.GOOGLE_CLIENT_ID
+  ? new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
+  : null;
+
+// Get frontend URL - prefer localhost:3002 for development
+const frontendUrls = (process.env.FRONTEND_URL || "http://localhost:5173")
+  .split(",")
+  .map((url) => url.trim())
+  .filter(Boolean);
+
+const frontendBaseUrl = 
+  frontendUrls.find(url => url.includes("3002")) || 
+  frontendUrls.find(url => url.includes("3003")) || 
+  frontendUrls[0];
+
+const googleCallbackUrl =
+  process.env.GOOGLE_CALLBACK_URL ||
+  "http://localhost:3001/api/auth/google/callback";
 
 // @route   POST /api/auth/register
 // @desc    Register user
@@ -50,26 +67,45 @@ router.post("/register", async (req, res) => {
     };
 
     // Sign JWT
-    jwt.sign(
-      payload,
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRE || "7d" },
-      (err, token) => {
-        if (err) throw err;
-        res.json({
-          success: true,
-          token,
-          user: {
-            id: user.id,
-            fullName: user.fullName,
-            email: user.email,
-            userType: user.userType,
-          },
-        });
-      }
-    );
+    let token;
+    try {
+      token = jwt.sign(payload, process.env.JWT_SECRET, {
+        expiresIn: process.env.JWT_EXPIRE || "7d",
+      });
+    } catch (err) {
+      console.error("JWT sign error:", err.message);
+      return res.status(500).json({
+        success: false,
+        message: "Token generation failed",
+      });
+    }
+
+    res.json({
+      success: true,
+      token,
+      user: {
+        id: user.id,
+        fullName: user.fullName,
+        email: user.email,
+        userType: user.userType,
+      },
+    });
   } catch (error) {
-    console.error("Registration error:", error.message);
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: "User already exists",
+      });
+    }
+
+    if (error.name === "ValidationError") {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    console.error("Registration error:", error);
     res.status(500).json({
       success: false,
       message: "Server error during registration",
@@ -124,26 +160,45 @@ router.post("/signup", async (req, res) => {
     };
 
     // Sign JWT
-    jwt.sign(
-      payload,
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRE || "7d" },
-      (err, token) => {
-        if (err) throw err;
-        res.json({
-          success: true,
-          token,
-          user: {
-            id: user.id,
-            fullName: user.fullName,
-            email: user.email,
-            userType: user.userType,
-          },
-        });
-      }
-    );
+    let token;
+    try {
+      token = jwt.sign(payload, process.env.JWT_SECRET, {
+        expiresIn: process.env.JWT_EXPIRE || "7d",
+      });
+    } catch (err) {
+      console.error("JWT sign error:", err.message);
+      return res.status(500).json({
+        success: false,
+        message: "Token generation failed",
+      });
+    }
+
+    res.json({
+      success: true,
+      token,
+      user: {
+        id: user.id,
+        fullName: user.fullName,
+        email: user.email,
+        userType: user.userType,
+      },
+    });
   } catch (error) {
-    console.error("Signup error:", error.message);
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: "User already exists",
+      });
+    }
+
+    if (error.name === "ValidationError") {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    console.error("Signup error:", error);
     res.status(500).json({
       success: false,
       message: "Server error during signup",
@@ -193,26 +248,31 @@ router.post("/login", async (req, res) => {
     };
 
     // Sign JWT
-    jwt.sign(
-      payload,
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRE || "7d" },
-      (err, token) => {
-        if (err) throw err;
-        res.json({
-          success: true,
-          token,
-          user: {
-            id: user.id,
-            fullName: user.fullName,
-            email: user.email,
-            userType: user.userType,
-          },
-        });
-      }
-    );
+    let token;
+    try {
+      token = jwt.sign(payload, process.env.JWT_SECRET, {
+        expiresIn: process.env.JWT_EXPIRE || "7d",
+      });
+    } catch (err) {
+      console.error("JWT sign error:", err.message);
+      return res.status(500).json({
+        success: false,
+        message: "Token generation failed",
+      });
+    }
+
+    res.json({
+      success: true,
+      token,
+      user: {
+        id: user.id,
+        fullName: user.fullName,
+        email: user.email,
+        userType: user.userType,
+      },
+    });
   } catch (error) {
-    console.error("Login error:", error.message);
+    console.error("Login error:", error);
     res.status(500).json({
       success: false,
       message: "Server error during login",
@@ -243,6 +303,14 @@ router.get("/me", auth, async (req, res) => {
 // @desc    Initiate Google OAuth
 // @access  Public
 router.get("/google", (req, res) => {
+  // Check if Google credentials are configured
+  if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+    return res.status(500).json({
+      success: false,
+      message: "Google OAuth is not configured. Please add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to .env file.",
+    });
+  }
+
   const { userType } = req.query;
 
   // Store userType in session or pass as state
@@ -251,9 +319,7 @@ router.get("/google", (req, res) => {
   const authUrl =
     `https://accounts.google.com/o/oauth2/auth?` +
     `client_id=${process.env.GOOGLE_CLIENT_ID}&` +
-    `redirect_uri=${encodeURIComponent(
-      "http://localhost:3001/api/auth/google/callback"
-    )}&` +
+    `redirect_uri=${encodeURIComponent(googleCallbackUrl)}&` +
     `response_type=code&` +
     `scope=${encodeURIComponent("profile email")}&` +
     `state=${state}`;
@@ -287,7 +353,7 @@ router.get("/google/callback", async (req, res) => {
         client_secret: process.env.GOOGLE_CLIENT_SECRET,
         code,
         grant_type: "authorization_code",
-        redirect_uri: `http://localhost:3001/api/auth/google/callback`,
+        redirect_uri: googleCallbackUrl,
       }
     );
 
@@ -347,7 +413,7 @@ router.get("/google/callback", async (req, res) => {
         if (err) {
           console.error("JWT signing error:", err);
           return res.redirect(
-            `${process.env.FRONTEND_URL}/login?error=authentication_failed`
+            `${frontendBaseUrl}/login?error=authentication_failed`
           );
         }
 
@@ -363,7 +429,7 @@ router.get("/google/callback", async (req, res) => {
         );
 
         res.redirect(
-          `${process.env.FRONTEND_URL}/auth/success?token=${jwtToken}&user=${userData}`
+          `${frontendBaseUrl}/auth/success?token=${jwtToken}&user=${userData}`
         );
       }
     );
@@ -378,7 +444,7 @@ router.get("/google/callback", async (req, res) => {
     }
     res.redirect(
       `${
-        process.env.FRONTEND_URL
+        frontendBaseUrl
       }/login?error=oauth_failed&message=${encodeURIComponent(error.message)}`
     );
   }
@@ -397,7 +463,7 @@ router.get("/linkedin", (req, res) => {
     `response_type=code&` +
     `client_id=${process.env.LINKEDIN_CLIENT_ID}&` +
     `redirect_uri=${encodeURIComponent(
-      process.env.FRONTEND_URL + "/auth/linkedin/callback"
+      frontendBaseUrl + "/auth/linkedin/callback"
     )}&` +
     `scope=r_liteprofile%20r_emailaddress&` +
     `state=${state}`;
@@ -429,7 +495,7 @@ router.post("/linkedin/callback", async (req, res) => {
       new URLSearchParams({
         grant_type: "authorization_code",
         code,
-        redirect_uri: `${process.env.FRONTEND_URL}/auth/linkedin/callback`,
+        redirect_uri: `${frontendBaseUrl}/auth/linkedin/callback`,
         client_id: process.env.LINKEDIN_CLIENT_ID,
         client_secret: process.env.LINKEDIN_CLIENT_SECRET,
       }),
@@ -532,7 +598,7 @@ router.get("/github", (req, res) => {
     `https://github.com/login/oauth/authorize?` +
     `client_id=${process.env.GITHUB_CLIENT_ID}&` +
     `redirect_uri=${encodeURIComponent(
-      process.env.FRONTEND_URL + "/auth/github/callback"
+      frontendBaseUrl + "/auth/github/callback"
     )}&` +
     `scope=user:email&` +
     `state=${state}`;
